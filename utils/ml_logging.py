@@ -6,9 +6,8 @@ import os
 import tensorflow as tf
 
 base_log_dir = "./logs"
-def get_log_dir(config_file_name):
-    basename = os.path.splitext(os.path.basename(config_file_name))[0]
-    return os.path.join(base_log_dir, basename)
+def get_log_dir(expt_name):
+    return os.path.join(base_log_dir, expt_name)
 
 class Logger(object):
     
@@ -48,3 +47,6 @@ class Logger(object):
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
         self.writer.add_summary(summary, step)
         self.writer.flush()
+
+    def close(self):
+        self.writer.close()
