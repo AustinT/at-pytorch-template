@@ -1,0 +1,8 @@
+{
+  "desc": "More hidden units",
+  "num_epochs": 200,
+  "learning_rate": 3e-4,
+  "batch_size": 16,
+  "save_freq": 50,
+  "n_hidden": 50
+}

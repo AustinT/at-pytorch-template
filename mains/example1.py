@@ -1,3 +1,11 @@
+"""
+This example script learns to calculate sin(x),
+in the region of -pi tp +pi
+
+It serves as an example of 2 things:
+1) How training is structured
+"""
+
 from argparse import ArgumentParser
 import sys
 import os
@@ -15,6 +23,7 @@ sys.path.append(os.getcwd())
 from utils import saver, ml_logging, config as cfg
 # Change this
 from data.example import SinxDataset
+from models.example_model import SimpleFeedForward
 
 # Arguments
 parser = ArgumentParser(description="Run machine learning training")
@@ -29,12 +38,11 @@ parser.add_argument("--eval", action="store_true")
 # Functions to make models
 def get_models(configs, device):
     """
-    Modify this function to set up your models, ideally using "configs" in some way
+    TODO Modify this function to set up your models, ideally using "configs" in some way
+
+    The example model used here is just a simple sequential one
     """
-    ff = nn.Sequential(
-        nn.Linear(1, configs["n_hidden"]),
-        nn.ReLU(),
-        nn.Linear(configs["n_hidden"], 1)).to(device)
+    ff = SimpleFeedForward(configs).to(device)
     return ff
 
 # Main program
@@ -65,10 +73,11 @@ if __name__ == "__main__":
     # Remember to move models to the correct device!
 
     ff = get_models(configs, device)
-    model_list = [ff]  # Change to add more models
+    model_list = [ff]  # TODO: make this a list of all models
 
     # Setup optimizer(s) and loss function(s)
-    optimizer = torch.optim.Adam(itertools.chain(*[model.parameters() for model in model_list]), lr=configs["learning_rate"])
+    optimizer = getattr(torch.optim, configs.get("optimizer", "Adam"))
+    optimizer = optimizer(itertools.chain(*[model.parameters() for model in model_list]), lr=configs["learning_rate"])
     loss_fn = nn.MSELoss()
     
     # Learning rate scheduler
@@ -85,7 +94,8 @@ if __name__ == "__main__":
     if args.load is None:
         start_epoch = 0
     else:
-        start_epoch = saver.load_checkpoint(model_list, optimizer, log_dir, epoch=args.load)
+        start_epoch = saver.load_checkpoint(model_list, log_dir, epoch=args.load,
+                optimizer=optimizer, lr_scheduler=lr_scheduler)
 
     # Do training
     if args.no_train:
@@ -100,6 +110,8 @@ if __name__ == "__main__":
             total_losses = []
 
             for batch_num, batch_dict in tqdm(enumerate(dataloader), desc="Batch", leave=False):
+
+                # TODO: rewrite the inner training loop
 
                 # Get data
                 x = torch.as_tensor(batch_dict['x'], device=device)
@@ -122,7 +134,8 @@ if __name__ == "__main__":
 
             # Saving and testing
             if epoch % configs.get('save_freq', int(1e6)) == 0:
-                saver.save_checkpoint(model_list, optimizer, log_dir, epoch)
+                saver.save_checkpoint(model_list, log_dir, epoch,
+                        optimizer=optimizer, lr_scheduler=lr_scheduler)
             
             # PUT ANY TESTING HERE (the kind that happens every epoch)
             for model in model_list:
@@ -130,7 +143,8 @@ if __name__ == "__main__":
         
         
         # Save a final checkpoint
-        saver.save_checkpoint(model_list, optimizer, log_dir, configs["num_epochs"])
+        saver.save_checkpoint(model_list, log_dir, configs["num_epochs"],
+                optimizer=optimizer, lr_scheduler=lr_scheduler)
                 
     if args.eval:
         print("Evaluating...")
