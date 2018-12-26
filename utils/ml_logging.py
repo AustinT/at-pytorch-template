@@ -4,6 +4,7 @@ https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/04-utils/tensor
 """
 import os
 import tensorflow as tf
+import numpy as np
 
 base_log_dir = "./logs"
 def get_log_dir(expt_name):
